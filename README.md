@@ -18,20 +18,20 @@ The use of "Docker user namespaces" is **not** a solution to the widely known "*
 **This is because users can disable Docker user namespaces for any container by adding the `--userns=host` flag to the `docker container create`, `docker container run`, or `docker container exec` commands.** [Reference](https://docs.docker.com/engine/security/userns-remap/#disable-namespace-remapping-for-a-container)
 
 ```bash
-[testuser@fedora31 ~]$ id
+$ id
 uid=1001(testuser) gid=1001(testuser) groups=1001(testuser),974(docker)
-[testuser@fedora31 ~]$ grep testuser /etc/sub?id
+$ grep testuser /etc/sub?id
 /etc/subgid:testuser:165536:65536
 /etc/subuid:testuser:165536:65536
-[testuser@fedora31 ~]$ cat /etc/docker/daemon.json 
+$ cat /etc/docker/daemon.json 
 {
     "userns-remap": "testuser"
 }
-[testuser@fedora31 ~]$ docker run -it --rm --volume="/:/mnt/hostfs" fedora /bin/bash
+$ docker run -it --rm --volume="/:/mnt/hostfs" fedora /bin/bash
 [root@1d135f34d711 /]# cd /mnt/hostfs/root/
 bash: cd: /mnt/hostfs/root/: Permission denied
 ...
-testuser@fedora31 ~]$ docker run -it --rm --volume="/:/mnt/hostfs" --userns=host fedora /bin/bash
+$ docker run -it --rm --volume="/:/mnt/hostfs" --userns=host fedora /bin/bash
 [root@b6441243f429 /]# cd /mnt/hostfs/root/
 [root@b6441243f429 root]# 
 ```
@@ -93,17 +93,18 @@ Restart the docker service:
 ```bash
 # systemctl restart docker
 ```
-5. Test the plugin:
+5. Testing the plugin:
 
+Allow the system (daemon-defined) namespace:
 ```bash
-[testuser@fedora31 ~]$ docker run -it --rm --volume="/:/mnt/hostfs" fedora /bin/bash
+$ docker run -it --rm --volume="/:/mnt/hostfs" fedora /bin/bash
 [root@ffb095a998e5 /]# cd /mnt/hostfs/root/
 bash: cd: /mnt/hostfs/root/: Permission denied
 [root@ffb095a998e5 /]# 
 ```
-
+Deny the user-defined `--userns=host`:
 ```bash
-[testuser@fedora31 ~]$ docker run -it --rm --volume="/:/mnt/hostfs" --userns=host fedora /bin/bash
+$ docker run -it --rm --volume="/:/mnt/hostfs" --userns=host fedora /bin/bash
 docker: Error response from daemon: authorization denied by plugin deny-userns-mode-host: userns=host is not allowed.
 See 'docker run --help'.
 ```
