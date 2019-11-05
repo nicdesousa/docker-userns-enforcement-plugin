@@ -32,3 +32,72 @@ testuser@fedora31 ~]$ docker run -it --rm --volume="/:/mnt/hostfs" --userns=host
 
 ## Installation and configuration of the plugin
 
+1. Download and compile the plugin source code:
+```bash
+$ go get github.com/nicdesousa/docker-userns-enforcement-plugin
+```
+2. Copy the `docker-userns-enforcement-plugin` binary to a suitable directory:
+```bash
+$ sudo cp $GOPATH/bin/docker-userns-enforcement-plugin /usr/local/bin
+```
+3. Create a systemd service and socket file to for the plugin:
+
+`/etc/systemd/system/docker-userns-enforcement-plugin.service`
+```bash
+[Unit]
+Description=Docker User Namespaces Enforcement Plugin
+Before=docker.service
+After=network.target docker-userns-enforcement-plugin.socket
+Requires=docker-userns-enforcement-plugin.socket docker.service
+
+[Service]
+ExecStart=/usr/local/bin/docker-userns-enforcement-plugin
+
+[Install]
+WantedBy=multi-user.target
+```
+`/lib/systemd/system/docker-userns-enforcement-plugin.socket`
+```bash
+[Unit]
+Description=Docker User Namespaces Enforcement Plugin
+
+[Socket]
+ListenStream=/run/docker/plugins/deny-userns-mode-host.sock
+
+[Install]
+WantedBy=sockets.target
+```
+
+Enable the plugin:
+```bash
+# systemctl daemon-reload
+# systemctl enable --now docker-userns-enforcement-plugin
+```
+4. Configure the Docker daemon to use the plugin:
+
+`/etc/docker/daemon.json`
+```bash
+{
+    "authorization-plugins": ["deny-userns-mode-host"],
+    "userns-remap": "testuser"
+}
+```
+
+Restart the docker service:
+```bash
+# systemctl restart docker
+```
+5. Test the plugin:
+
+```bash
+[testuser@fedora31 ~]$ docker run -it --rm --volume="/:/mnt/hostfs" fedora /bin/bash
+[root@ffb095a998e5 /]# cd /mnt/hostfs/root/
+bash: cd: /mnt/hostfs/root/: Permission denied
+[root@ffb095a998e5 /]# 
+```
+
+```bash
+[testuser@fedora31 ~]$ docker run -it --rm --volume="/:/mnt/hostfs" --userns=host fedora /bin/bash
+docker: Error response from daemon: authorization denied by plugin deny-userns-mode-host: userns=host is not allowed.
+See 'docker run --help'.
+```
