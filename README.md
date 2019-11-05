@@ -1,9 +1,9 @@
 # Docker User Namespaces Enforcement Plugin
 
-This project provides a simple Docker authorization plugin that prevents the running of containers with userns-mode set to host (`--userns=host`) when [Docker user namespace remapping](https://docs.docker.com/engine/security/userns-remap/) is enabled.
+This project provides a simple Docker authorization plugin that prevents the running of containers with userns-mode set to host (`--userns=host`) when [Docker user namespace remapping](https://docs.docker.com/engine/security/userns-remap/) is enabled:
 
 ```bash
-[testuser@fedora31 ~]$ docker run -it --rm --volume="/:/mnt/hostfs" --userns=host fedora /bin/bash
+$ docker run -it --rm --volume="/:/mnt/hostfs" --userns=host fedora /bin/bash
 docker: Error response from daemon: authorization denied by plugin deny-userns-mode-host: userns=host is not allowed.
 See 'docker run --help'.
 ```
