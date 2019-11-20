@@ -158,7 +158,7 @@ func denyUsernsModeHost(w http.ResponseWriter, r *http.Request) {
 				logData[k] = v
 			}
 		}
-		if v, ok := v["UsernsMode"]; ok && v.(string) == "host" && strings.HasSuffix(req.RequestURI, "/containers/create") {
+		if v, ok := v["UsernsMode"]; ok && v.(string) == "host" && strings.Contains(req.RequestURI, "/containers/create") {
 			// Apparently you don't send 403 for a successful deny.
 			code = http.StatusOK
 			resp.Msg = "userns=host is not allowed"
