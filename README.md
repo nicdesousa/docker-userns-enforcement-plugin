@@ -1,12 +1,8 @@
 # Docker User Namespaces Enforcement Plugin
 
-This project provides a simple Docker authorization plugin that prevents the running of containers with userns-mode set to host (`--userns=host`) when [Docker user namespace remapping](https://docs.docker.com/engine/security/userns-remap/) is enabled:
+[![Go Report Card](https://goreportcard.com/badge/github.com/nicdesousa/docker-userns-enforcement-plugin)](https://goreportcard.com/badge/github.com/nicdesousa/docker-userns-enforcement-plugin)
 
-```bash
-$ docker run -it --rm --volume="/:/mnt/hostfs" --userns=host fedora /bin/bash
-docker: Error response from daemon: authorization denied by plugin deny-userns-mode-host: userns=host is not allowed.
-See 'docker run --help'.
-```
+This project provides a simple Docker authorization plugin that prevents the running of containers with userns-mode set to host (`--userns=host`) when [Docker user namespace remapping](https://docs.docker.com/engine/security/userns-remap/) is enabled.
 
 ## Background
 - ["Privilege escalation" when starting the Docker daemon with user namespaces enabled](https://github.com/moby/moby/issues/32624)
@@ -15,7 +11,7 @@ See 'docker run --help'.
 
 The use of "Docker user namespaces" is **not** a solution to the widely known "*anyone with access to the Docker daemon effectively has root permissions on the host*" problem.
 
-**This is because users can disable Docker user namespaces for any container by adding the `--userns=host` flag to the `docker container create`, `docker container run`, or `docker container exec` commands.** [Reference](https://docs.docker.com/engine/security/userns-remap/#disable-namespace-remapping-for-a-container)
+**This is because users can disable Docker user namespaces for any container by adding the `--userns=host` flag to the `docker container create`, `docker container run`, or `docker container exec` commands.** [See the Docker documentation](https://docs.docker.com/engine/security/userns-remap/#disable-namespace-remapping-for-a-container)
 
 ```bash
 $ id
@@ -27,13 +23,21 @@ $ cat /etc/docker/daemon.json
 {
     "userns-remap": "testuser"
 }
+...
+# Daemon-configured (default) user namespace:
 $ docker run -it --rm --volume="/:/mnt/hostfs" fedora /bin/bash
 [root@1d135f34d711 /]# cd /mnt/hostfs/root/
 bash: cd: /mnt/hostfs/root/: Permission denied
 ...
+# User-specified user namespace:
 $ docker run -it --rm --volume="/:/mnt/hostfs" --userns=host fedora /bin/bash
 [root@b6441243f429 /]# cd /mnt/hostfs/root/
 [root@b6441243f429 root]# 
+...
+# Solution provided by this plugin:
+$ docker run -it --rm --volume="/:/mnt/hostfs" --userns=host fedora /bin/bash
+docker: Error response from daemon: authorization denied by plugin deny-userns-mode-host: userns=host is not allowed.
+See 'docker run --help'.
 ```
 
 ## Installation and configuration of the plugin
@@ -93,18 +97,5 @@ Restart the docker service:
 ```bash
 # systemctl restart docker
 ```
-5. Testing the plugin:
 
-Allow the system (daemon-defined) namespace:
-```bash
-$ docker run -it --rm --volume="/:/mnt/hostfs" fedora /bin/bash
-[root@ffb095a998e5 /]# cd /mnt/hostfs/root/
-bash: cd: /mnt/hostfs/root/: Permission denied
-[root@ffb095a998e5 /]# 
-```
-Deny the user-defined `--userns=host`:
-```bash
-$ docker run -it --rm --volume="/:/mnt/hostfs" --userns=host fedora /bin/bash
-docker: Error response from daemon: authorization denied by plugin deny-userns-mode-host: userns=host is not allowed.
-See 'docker run --help'.
-```
+5. Test with the examples provided in the Background section.
