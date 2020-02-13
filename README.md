@@ -1,6 +1,7 @@
 # Docker User Namespaces Enforcement Plugin
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/nicdesousa/docker-userns-enforcement-plugin)](https://goreportcard.com/badge/github.com/nicdesousa/docker-userns-enforcement-plugin)
+![Go Report Card](https://goreportcard.com/badge/github.com/nicdesousa/docker-userns-enforcement-plugin)
+![GitHub](https://img.shields.io/github/license/nicdesousa/docker-userns-enforcement-plugin)
 
 This project provides a simple Docker authorization plugin that prevents the running of containers with userns-mode set to host (`--userns=host`) when [Docker user namespace remapping](https://docs.docker.com/engine/security/userns-remap/) is enabled.
 
